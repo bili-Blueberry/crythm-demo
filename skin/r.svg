@@ -1,0 +1,15 @@
+<svg width="110" height="114" viewBox="0 0 110 114" xmlns="http://www.w3.org/2000/svg">
+  <!-- 外层菱形描边 -->
+  <polygon 
+    points="55,5 105,57 55,109 5,57" 
+    fill="none" 
+    stroke="#F4A7C9"
+    stroke-width="4"
+  />
+  <!-- 内层实心菱形 -->
+  <polygon 
+    points="55,17 93,57 55,97 17,57" 
+    fill="#F4A7C9"
+    stroke="none"
+  />
+</svg>

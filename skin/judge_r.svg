@@ -1,0 +1,11 @@
+<svg width="134" height="94" viewBox="0 0 134 94" xmlns="http://www.w3.org/2000/svg">
+  <!-- 柔和的竖向光 -->
+  <rect x="63" y="10" width="8" height="32" rx="4"
+    fill="#F4A7C9" fill-opacity="0.25">
+    <animate attributeName="opacity" values="0.4;0.25;0.4" dur="1.5s" repeatCount="indefinite"/>
+  </rect>
+  <!-- 横线 -->
+  <rect x="12" y="46" width="110" height="2" fill="#F4A7C9" fill-opacity="0.5"/>
+  <!-- 中心小菱形 -->
+  <polygon points="67,42 72,47 67,52 62,47" fill="#F4A7C9"/>
+</svg>
