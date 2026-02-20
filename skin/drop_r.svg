@@ -1,0 +1,17 @@
+<svg width="55" height="57" viewBox="0 0 55 57" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="4" result="glow"/>
+      <feMerge>
+        <feMergeNode in="glow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- 实心小菱形带发光 -->
+  <polygon 
+    points="27.5,6 49,28.5 27.5,51 6,28.5" 
+    fill="#F4A7C9" 
+    filter="url(#glow)"
+  />
+</svg>
