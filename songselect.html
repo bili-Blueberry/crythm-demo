@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>《Crythm》选歌界面Demo</title>
+<style>
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: linear-gradient(135deg, rgba(0, 0, 100, 0.85), rgba(0, 0, 5, 0.85));
+  margin: 40px;
+}
+.song-list {
+  display: flex;
+  flex-direction: column;
+  width: 260px;
+  float: left;
+}
+.song-box {
+  margin-bottom: 14px;
+}
+.song-jacket {
+  width: 94px; height: 94px; border-radius: 12px;
+  cursor: pointer;
+  object-fit: cover;
+  margin-bottom: 7px;
+  transition: box-shadow 0.35s;
+}
+.selected {
+  outline: 2.5px solid #EA1C1F;
+}
+.song-info {
+  margin-left: 30px;
+  float: left;
+  min-width: 320px;
+}
+.song-difficulty {
+  margin-top: 12px;
+  display: flex; flex-direction: row;
+}
+.diff-tag {
+  padding: 4px 13px;
+  margin: 0 7px;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 15px;
+  box-shadow: 0 0 6px 2px;
+}
+.song-title {
+  font-weight: 600;
+  font-size: 22px;
+  margin-top: 18px;
+}
+.song-artist {
+  color: #999;
+  font-size: 14px;
+}
+.song-charter {
+  color: #bbb;
+  font-size: 14px;
+}
+.audio-preview {
+  margin-top: 17px;
+}
+</style>
+</head>
+<body>
+
+<div class="song-list" id="songList"></div>
+<div class="song-info" id="songInfo"></div>
+
+<script>
+// 难度色和文字色
+const DIFF_BG = {
+  Easy: "#00B309",
+  Hardest: "#FBEC1F",
+  Expert: "#EA1C1F",
+  Ultimate: "#6C5CDB",
+  Legend: "#8C8C8C"
+};
+const DIFF_TXT = {
+  Easy: "#174528",
+  Hardest: "#F9A708",
+  Expert: "#F87320",
+  Ultimate: "#4001A4",
+  Legend: "#000000"
+};
+const DIFF_TAGS = ["Easy", "Hardest", "Expert", "Ultimate", "Legend"];
+
+let songs = [];
+let selectedSongIdx = 0, previewAudio = null;
+
+// 新：先加载 songs.json
+fetch('songs.json').then(r => r.json())
+.then(songIDs => {
+  // 支持对象数组和ID数组
+  if (Array.isArray(songIDs) && typeof songIDs[0] === "object")
+    songIDs = songIDs.map(obj => obj.id);
+  return Promise.all(songIDs.map(id =>
+    fetch(`json/${id}.json`).then(r => r.json())
+  ));
+}).then(arr => {
+  songs = arr.sort((a, b) => (+a.id) - (+b.id));
+  renderSongList();
+  renderSongInfo(selectedSongIdx);
+});
+
+// 列表渲染
+function renderSongList() {
+  const listElem = document.getElementById('songList');
+  listElem.innerHTML = '';
+  songs.forEach((song, idx) => {
+    const box = document.createElement('div');
+    box.className = 'song-box';
+
+    const jacket = document.createElement('img');
+    jacket.src = `jacket/${song.id}.jpg`;
+    jacket.alt = song.title;
+    jacket.className = 'song-jacket' + (selectedSongIdx === idx ? ' selected' : '');
+    jacket.style.boxShadow = selectedSongIdx === idx ? "0 0 18px 6px #EA1C1F70" : "";
+    jacket.onclick = () => {
+      selectedSongIdx = idx;
+      renderSongList();
+      renderSongInfo(idx);
+    };
+    box.appendChild(jacket);
+
+    // 标题等
+    box.innerHTML += `<div class="song-title" style="font-size:16px;font-weight:bold;">${song.title}</div>
+      <div class="song-artist">by ${song.artist}</div>
+      <div class="song-charter">谱师: ${song.charter}</div>`;
+    listElem.appendChild(box);
+  });
+}
+
+// 详细渲染
+function renderSongInfo(idx) {
+  const song = songs[idx];
+  const infoElem = document.getElementById('songInfo');
+  infoElem.innerHTML = '';
+
+  // 主封面
+  const jacket = document.createElement('img');
+  jacket.src = `jacket/${song.id}.jpg`;
+  jacket.alt = song.title;
+  jacket.style.width = "120px";
+  jacket.style.height = "120px";
+  jacket.style.borderRadius = "18px";
+  jacket.style.cursor = "pointer";
+  jacket.style.boxShadow = "0 0 36px 12px #EA1C1F80";
+  jacket.onclick = () => {
+    // 打开start.html并传入ID参数
+    window.open(`start.html?id=${song.id}`, "_blank");
+  };
+  infoElem.appendChild(jacket);
+
+  // 标题等
+  infoElem.innerHTML += `
+    <div class="song-title">${song.title}</div>
+    <div class="song-artist">${song.artist}</div>
+    <div class="song-charter">谱师: ${song.charter}</div>
+    <div class="song-difficulty">` +
+    DIFF_TAGS.map(tag =>
+      song.difficulties[tag] != null ?
+        `<div class="diff-tag"
+          style="background:${DIFF_BG[tag]};color:${DIFF_TXT[tag]};box-shadow:0 0 6px 2px ${DIFF_BG[tag]}80;">
+          ${tag} <span style="font-size:13px;">${song.difficulties[tag]}</span>
+         </div>`
+        : ''
+    ).join('') +
+    `</div>`;
+
+  // 音频预览
+  findPreviewAudio(song.id).then(src => {
+    if (src) {
+      infoElem.innerHTML += `<audio src="${src}" controls class="audio-preview"></audio>`;
+    } else {
+      infoElem.innerHTML += `<div style="margin-top:17px;color:#888;">预览音频未找到</div>`;
+    }
+  });
+}
+
+// 自动查找 mp3/ogg/wav 任意格式
+async function findPreviewAudio(songID) {
+  const exts = ["mp3","ogg","wav"];
+  for (let ext of exts) {
+    try {
+      let url = `preview/${songID}.${ext}`;
+      let r = await fetch(url,{method:'HEAD'});
+      if(r.ok) return url;
+    } catch {}
+  }
+  return null;
+}
+</script>
+</body>
+</html>
